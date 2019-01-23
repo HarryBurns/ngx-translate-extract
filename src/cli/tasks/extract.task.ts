@@ -69,10 +69,15 @@ export class ExtractTask implements TaskInterface {
 				this._options.verbose && this._out(chalk.gray('- %s'), path);
 				const contents: string = fs.readFileSync(path, 'utf-8');
 				this._parsers.forEach((parser: ParserInterface) => {
-					collection = collection.union(parser.extract(contents, path));
+					collection = collection.concat(parser.extract(contents, path));
 				});
 			});
 		});
+
+		if (collection.hasDuplicates()) {
+			console.log('ERROR: found duplicates in translation ids: ' + collection.getIdDuplicates().join(', '));
+			throw new Error('Found duplicates in translation ids');
+		}
 
 		return collection;
 	}
@@ -100,7 +105,7 @@ export class ExtractTask implements TaskInterface {
 			if (fs.existsSync(outputPath) && !this._options.replace) {
 				const existingCollection: TranslationCollection = this._compiler.parse(fs.readFileSync(outputPath, 'utf-8'));
 				if (!existingCollection.isEmpty()) {
-					processedCollection = processedCollection.union(existingCollection);
+					processedCollection = processedCollection.merge(existingCollection);
 					this._out(chalk.dim('- merged with %d existing strings'), existingCollection.count());
 				}
 

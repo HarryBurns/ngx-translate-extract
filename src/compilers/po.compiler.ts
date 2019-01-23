@@ -1,8 +1,12 @@
 import { CompilerInterface } from './compiler.interface';
-import { TranslationCollection, TranslationType } from '../utils/translation.collection';
+import { TranslationCollection, TranslationInfo } from '../utils/translation.collection';
 
 import * as gettext from 'gettext-parser';
 
+/**
+ * PO / POT gettext format compiler.
+ * @see https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html
+ */
 export class PoCompiler implements CompilerInterface {
 
 	public extension = 'po';
@@ -12,7 +16,8 @@ export class PoCompiler implements CompilerInterface {
 	 */
 	public domain = '';
 
-	public constructor(options?: any) { }
+	public constructor(options?: any) {
+	}
 
 	public compile(collection: TranslationCollection): string {
 		const data = {
@@ -23,10 +28,13 @@ export class PoCompiler implements CompilerInterface {
 				'content-transfer-encoding': '8bit'
 			},
 			translations: {
-				[this.domain]: Object.keys(collection.values).reduce((translations, key) => {
-					translations[key] = {
-						msgid: key,
-						msgstr: collection.get(key)
+				[this.domain]: collection.values.reduce((translations, translationInfo) => {
+					translations[translationInfo.id] = {
+						msgid: translationInfo.id,
+						msgstr: translationInfo.suggestedTranslation,
+						comments: {
+							extracted: translationInfo.note
+						}
 					};
 					return translations;
 				}, <any> {})
@@ -45,11 +53,16 @@ export class PoCompiler implements CompilerInterface {
 		}
 
 		const values = Object.keys(po.translations[this.domain])
-			.filter(key => key.length > 0)
-			.reduce((values, key) => {
-				values[key] = po.translations[this.domain][key].msgstr.pop();
+			.filter(id => id.length > 0)
+			.reduce((values, id) => {
+				let translation = po.translations[this.domain][id];
+				values.push({
+					id: translation.msgid,
+					suggestedTranslation: translation.msgstr.pop(),
+					note: translation.comments.extracted
+				});
 				return values;
-			}, <TranslationType> {});
+			}, <TranslationInfo[]> []);
 
 		return new TranslationCollection(values);
 	}

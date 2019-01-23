@@ -1,86 +1,173 @@
-export interface TranslationType {
-	[key: string]: string
+export interface TranslationInfo {
+	id: string;
+	suggestedTranslation?: string;
+	note?: string;
+	translation?: string; // field to integrate with existing translations in replaced files
 }
 
 export class TranslationCollection {
 
-	public values: TranslationType = {};
+	public values: TranslationInfo[] = [];
 
-	public constructor(values: TranslationType = {}) {
-		this.values = values;
+	public constructor(translationInfoCollection?: TranslationInfo[]) {
+		if (translationInfoCollection) {
+			translationInfoCollection.forEach(translationInfo => {
+				this.values.push(Object.assign({}, translationInfo));
+			});
+		}
 	}
 
-	public add(key: string, val: string = ''): TranslationCollection {
-		return new TranslationCollection(Object.assign({}, this.values, { [key]: val }));
+	/**
+	 * Add entry to the current translation collection
+	 * @param {string} id translation id
+	 * @param {string} [suggestedTranslation] suggested (by developers) translation
+	 * @param {string} [note] note for translators
+	 */
+	public add(id: string, suggestedTranslation?: string, note?: string) {
+		this.values.push({
+			id: id,
+			suggestedTranslation: suggestedTranslation,
+			note: note
+		});
 	}
 
-	public addKeys(keys: string[]): TranslationCollection {
-		const values = keys.reduce((results, key) => {
-			results[key] = '';
-			return results;
-		}, <TranslationType> {});
-		return new TranslationCollection(Object.assign({}, this.values, values));
+	/**
+	 * Add entry to the current translation collection
+	 * @param {TranslationInfo} translationInfo
+	 */
+	public addTranslationInfo(translationInfo: TranslationInfo) {
+		this.values.push(Object.assign({}, translationInfo));
 	}
 
-	public remove(key: string): TranslationCollection {
-		return this.filter(k => key !== k);
+	/**
+	 * Remove translation from collection by translation key
+	 * @param {string} key
+	 */
+	public remove(key: string) {
+		this.values = this.values.filter(e => e.id === key);
 	}
 
-	public forEach(callback: (key?: string, val?: string) => void): TranslationCollection {
-		Object.keys(this.values).forEach(key => callback.call(this, key, this.values[key]));
+	public forEach(callback: (translationInfo: TranslationInfo) => void): TranslationCollection {
+		this.values.forEach(translationInfo => callback.call(this, translationInfo));
 		return this;
 	}
 
-	public filter(callback: (key?: string, val?: string) => boolean): TranslationCollection {
-		let values: TranslationType = {};
-		this.forEach((key: string, val: string) => {
-			if (callback.call(this, key, val)) {
-				values[key] = val;
+	/**
+	 * Immutable filter function
+	 * @param callback predicate
+	 */
+	public filter(callback: (translationInfo: TranslationInfo) => boolean): TranslationCollection {
+		let values: TranslationInfo[] = [];
+		this.values.filter(translationInfo => {
+			if (callback.call(this, translationInfo)) {
+				values.push(translationInfo);
 			}
 		});
 		return new TranslationCollection(values);
 	}
 
-	public union(collection: TranslationCollection): TranslationCollection {
-		return new TranslationCollection(Object.assign({}, this.values, collection.values));
+	/**
+	 * Merge two Translation collections (immutable). If there are duplicates by `id` field - they will be merged.
+	 * Source collection values will update parameter collection values (via Object.assign).
+	 * @param {TranslationCollection} collection
+	 */
+	public merge(collection: TranslationCollection): TranslationCollection {
+		let newTranslationCollection: TranslationCollection = new TranslationCollection(collection.values);
+
+		this.values.forEach(translationInfo => {
+			let duplicateIndex = newTranslationCollection.values.findIndex(v => v.id === translationInfo.id);
+			if (duplicateIndex >= 0) {
+				newTranslationCollection.values[duplicateIndex] = Object.assign(newTranslationCollection.values[duplicateIndex], translationInfo);
+			}
+		});
+
+		return newTranslationCollection;
+	}
+
+	/**
+	 * Concatenate two translation collections (immutable)
+	 * @param {TranslationCollection} collection
+	 */
+	public concat(collection: TranslationCollection): TranslationCollection {
+		return new TranslationCollection(this.values.slice(0).concat(collection.values));
 	}
 
 	public intersect(collection: TranslationCollection): TranslationCollection {
-		let values: TranslationType = {};
-		this.filter(key => collection.has(key))
-			.forEach((key: string, val: string) => {
-				values[key] = val;
-			});
+		let values: TranslationInfo[] = this.values.filter(translationInfo => {
+			return collection.values
+				.some(anotherTranslationInfo => anotherTranslationInfo.id === translationInfo.id);
+		});
 
 		return new TranslationCollection(values);
 	}
 
-	public has(key: string): boolean {
-		return this.values.hasOwnProperty(key);
+	/**
+	 * Check if there is translation info with specific id
+	 * @param {string} id
+	 * @return {boolean}
+	 */
+	public has(id: string): boolean {
+		return this.values.some(translationInfo => translationInfo.id === id);
 	}
 
-	public get(key: string): string {
-		return this.values[key];
+	/**
+	 * Get translation info by ID
+	 * @param {string} id
+	 * @return {TranslationInfo}
+	 */
+	public get(id: string): TranslationInfo {
+		return this.values.find(translationInfo => translationInfo.id === id);
 	}
 
-	public keys(): string[] {
-		return Object.keys(this.values);
+	/**
+	 * Get list of all translation IDs
+	 * @return {string[]}
+	 */
+	public ids(): string[] {
+		return this.values.map(translationInfo => translationInfo.id);
+	}
+
+	public hasDuplicates(): boolean {
+		let obj: { [key: string]: boolean } = {};
+		for (let i = 0; i < this.values.length; i++) {
+			const translationInfo = this.values[i];
+			if (obj[translationInfo.id]) {
+				return true;
+			}
+			obj[translationInfo.id] = true;
+		}
+		return false;
+	}
+
+	public getIdDuplicates(): string[] {
+		let duplicates = [];
+		let obj: { [key: string]: boolean } = {};
+		for (let i = 0; i < this.values.length; i++) {
+			const translationInfo = this.values[i];
+			if (obj[translationInfo.id]) {
+				duplicates.push(translationInfo.id);
+			}
+			obj[translationInfo.id] = true;
+		}
+		return duplicates;
 	}
 
 	public count(): number {
-		return Object.keys(this.values).length;
+		return this.values.length;
 	}
 
 	public isEmpty(): boolean {
-		return Object.keys(this.values).length === 0;
+		return this.values.length === 0;
 	}
 
-	public sort(compareFn?: (a: string, b: string) => number): TranslationCollection {
-		let values: TranslationType = {};
-		this.keys().sort(compareFn).forEach((key) => {
-			values[key] = this.get(key);
+	/**
+	 * Sort translation collection (immutable). Will return new collection.
+	 * @param {(id1: string, id2: string) => number} compareFn
+	 */
+	public sort(compareFn?: (id1: string, id2: string) => number): TranslationCollection {
+		let values = this.values.slice(0).sort((a, b) => {
+			return compareFn(a.id, b.id);
 		});
-
 		return new TranslationCollection(values);
 	}
 }

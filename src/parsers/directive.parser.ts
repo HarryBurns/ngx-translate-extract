@@ -28,9 +28,10 @@ export class DirectiveParser extends AbstractTemplateParser implements ParserInt
 			.each((i: number, element: CheerioElement) => {
 				const $element = $(element);
 				const attr = $element.attr('translate') || $element.attr('ng2-translate');
+				// TODO we can't pass 3 arguments that way, so I disable DirectiveParser at all
 
 				if (attr) {
-					collection = collection.add(attr);
+					collection.add(attr);
 				} else {
 					$element
 						.contents()
@@ -38,7 +39,7 @@ export class DirectiveParser extends AbstractTemplateParser implements ParserInt
 						.filter(node => node.type === 'text')
 						.map(node => node.nodeValue.trim())
 						.filter(text => text.length > 0)
-						.forEach(text => collection = collection.add(text));
+						.forEach(text => collection.add(text));
 				}
 			});
 

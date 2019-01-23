@@ -1,7 +1,7 @@
 {
-  "name": "@biesbjerg/ngx-translate-extract",
-  "version": "2.3.4",
-  "description": "Extract strings from projects using ngx-translate",
+  "name": "@eemoss/i18n-transcoder",
+  "version": "0.1.0",
+  "description": "Fork from ngx-translate for extracting i18n data for xliff with translation IDs and notes",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "files": [
@@ -9,18 +9,18 @@
     "dist/"
   ],
   "bin": {
-    "ngx-translate-extract": "bin/cli.js"
+    "i18n-transcoder": "bin/cli.js"
   },
   "scripts": {
     "build": "npm run clean && tsc",
     "watch": "npm run clean && tsc --watch",
-    "clean": "rm -rf ./dist",
+    "clean": "shx rm -rf ./dist",
     "lint": "tslint --force './src/**/*.ts'",
     "test": "mocha -r ts-node/register tests/**/*.spec.ts"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/biesbjerg/ngx-translate-extract.git"
+    "url": "https://github.com/eemoss/i18n-transcoder.git"
   },
   "keywords": [
     "angular",
@@ -34,43 +34,46 @@
     "translate",
     "translation",
     "i18n",
-    "gettext"
+    "gettext",
+    "xliff",
+    "xliff2"
   ],
-  "author": "Kim Biesbjerg <kim@biesbjerg.com>",
+  "author": "Aleksei Tolkachev <aleksei@peoplepowerco.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/biesbjerg/ngx-translate-extract/issues"
+    "url": "https://github.com/eemoss/i18n-transcoder/issues"
   },
-  "homepage": "https://github.com/biesbjerg/ngx-translate-extract",
+  "homepage": "https://github.com/eemoss/i18n-transcoder",
   "engines": {
     "node": ">=4.3.2"
   },
   "config": {},
   "devDependencies": {
     "@types/chai": "4.0.1",
-    "@types/glob": "5.0.30",
-    "@types/mocha": "2.2.41",
-    "@types/cheerio": "0.22.1",
     "@types/chalk": "0.4.31",
+    "@types/cheerio": "0.22.1",
     "@types/flat": "0.0.28",
-    "@types/yargs": "8.0.0",
+    "@types/glob": "5.0.30",
     "@types/mkdirp": "0.3.29",
+    "@types/mocha": "2.2.41",
+    "@types/yargs": "8.0.0",
     "chai": "4.0.2",
     "mocha": "3.4.2",
+    "shx": "0.3.2",
     "ts-node": "3.1.0",
     "tslint": "5.4.3",
     "tslint-eslint-rules": "4.1.1"
   },
   "dependencies": {
     "chalk": "2.0.1",
-    "yargs": "8.0.2",
     "cheerio": "1.0.0-rc.2",
     "fs": "0.0.1-security",
     "gettext-parser": "1.2.2",
     "glob": "7.1.2",
-    "path": "0.12.7",
     "mkdirp": "0.5.1",
-    "flat": "2.0.1",
-    "typescript": "2.4.1"
+    "path": "0.12.7",
+    "typescript": "2.4.1",
+    "xliff": "4.1.6",
+    "yargs": "8.0.2"
   }
 }

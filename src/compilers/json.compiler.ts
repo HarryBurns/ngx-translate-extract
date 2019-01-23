@@ -1,11 +1,10 @@
 import { CompilerInterface } from './compiler.interface';
-import { TranslationCollection } from '../utils/translation.collection';
-
-import * as flat from 'flat';
+import { TranslationCollection, TranslationInfo } from '../utils/translation.collection';
+import { flattenToTranslation, isFlattenJsonFormat } from '../utils/utils';
 
 export class JsonCompiler implements CompilerInterface {
 
-	public indentation: string = '\t';
+	public indentation: string = '  ';
 
 	public extension = 'json';
 
@@ -16,19 +15,23 @@ export class JsonCompiler implements CompilerInterface {
 	}
 
 	public compile(collection: TranslationCollection): string {
-		return JSON.stringify(collection.values, null, this.indentation);
+		let translations = collection.values.reduce((acc, currentValue) => {
+			acc[currentValue.id] = currentValue;
+			return acc;
+		}, <any> {});
+		return JSON.stringify(translations, null, this.indentation);
 	}
 
 	public parse(contents: string): TranslationCollection {
-		let values: any = JSON.parse(contents);
-		if (this._isNamespacedJsonFormat(values)) {
-			values = flat.flatten(values);
+		let translations: { [id: string]: TranslationInfo } = JSON.parse(contents);
+		if (!isFlattenJsonFormat(translations)) {
+			translations = flattenToTranslation(translations);
 		}
-		return new TranslationCollection(values);
+		Object.keys(translations).forEach((id) => {
+			translations[id].id = id; // fix the ids
+		});
+		return new TranslationCollection(Object.values(translations));
 	}
 
-	protected _isNamespacedJsonFormat(values: any): boolean {
-		return Object.keys(values).some(key => typeof values[key] === 'object');
-	}
 
 }

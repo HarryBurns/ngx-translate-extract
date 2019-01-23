@@ -1,11 +1,10 @@
 import { CompilerInterface } from './compiler.interface';
 import { TranslationCollection } from '../utils/translation.collection';
-
-import * as flat from 'flat';
+import { flattenToTranslation, unflattenToTranslation } from '../utils/utils';
 
 export class NamespacedJsonCompiler implements CompilerInterface {
 
-	public indentation: string = '\t';
+	public indentation: string = '  ';
 
 	public extension = 'json';
 
@@ -16,15 +15,17 @@ export class NamespacedJsonCompiler implements CompilerInterface {
 	}
 
 	public compile(collection: TranslationCollection): string {
-		const values: {} = flat.unflatten(collection.values, {
-			object: true
-		});
-		return JSON.stringify(values, null, this.indentation);
+		let translations = collection.values.reduce((acc, currentValue) => {
+			acc[currentValue.id] = currentValue;
+			return acc;
+		}, <any> {});
+		translations = unflattenToTranslation(translations);
+		return JSON.stringify(translations, null, this.indentation);
 	}
 
 	public parse(contents: string): TranslationCollection {
-		const values: {} = flat.flatten(JSON.parse(contents));
-		return new TranslationCollection(values);
+		const translations: {} = flattenToTranslation(JSON.parse(contents));
+		return new TranslationCollection(Object.values(translations));
 	}
 
 }

@@ -6,7 +6,7 @@ import * as ts from 'typescript';
 
 export class FunctionParser extends AbstractAstParser implements ParserInterface {
 
-	protected _functionIdentifier: string = '_';
+	protected _functionIdentifier: string = '$i18n';
 
 	public constructor(options?: any) {
 		super();
@@ -22,9 +22,9 @@ export class FunctionParser extends AbstractAstParser implements ParserInterface
 
 		const callNodes = this._findCallNodes();
 		callNodes.forEach(callNode => {
-			const keys: string[] = this._getCallArgStrings(callNode);
-			if (keys && keys.length) {
-				collection = collection.addKeys(keys);
+			const args: string[] = this._getCallArgStrings(callNode);
+			if (args && args.length) {
+				collection.add(args[0], args[1], args[3]);
 			}
 		});
 

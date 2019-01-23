@@ -1,7 +1,6 @@
 import { ExtractTask } from './tasks/extract.task';
 import { ParserInterface } from '../parsers/parser.interface';
 import { PipeParser } from '../parsers/pipe.parser';
-import { DirectiveParser } from '../parsers/directive.parser';
 import { ServiceParser } from '../parsers/service.parser';
 import { FunctionParser } from '../parsers/function.parser';
 import { CompilerInterface } from '../compilers/compiler.interface';
@@ -9,6 +8,7 @@ import { CompilerFactory } from '../compilers/compiler.factory';
 
 import * as fs from 'fs';
 import * as yargs from 'yargs';
+import { JsonParser } from '../parsers/json.parser';
 
 export const cli = yargs
 	.usage('Extract strings from files for translation.\nUsage: $0 [options]')
@@ -36,7 +36,7 @@ export const cli = yargs
 		alias: 'p',
 		describe: 'Extract strings from the following file patterns',
 		type: 'array',
-		default: ['/**/*.html', '/**/*.ts']
+		default: ['/**/*.html', '/**/*.ts', '/**/*.json']
 	})
 	.option('output', {
 		alias: 'o',
@@ -56,12 +56,12 @@ export const cli = yargs
 		describe: 'Output format',
 		default: 'json',
 		type: 'string',
-		choices: ['json', 'namespaced-json', 'pot']
+		choices: ['json', 'namespaced-json', 'pot', 'xliff', 'xliff2']
 	})
 	.option('format-indentation', {
 		alias: 'fi',
 		describe: 'Output format indentation',
-		default: '\t',
+		default: '  ',
 		type: 'string'
 	})
 	.option('replace', {
@@ -105,7 +105,8 @@ extract.setCompiler(compiler);
 
 const parsers: ParserInterface[] = [
 	new PipeParser(),
-	new DirectiveParser(),
+	new JsonParser(),
+	// new DirectiveParser(), // NOTE: disabled, because we can't pass 3 arguments by that way
 	new ServiceParser()
 ];
 if (cli.marker) {

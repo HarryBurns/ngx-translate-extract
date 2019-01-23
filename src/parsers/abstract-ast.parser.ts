@@ -9,27 +9,31 @@ export abstract class AbstractAstParser {
 	}
 
 	/**
-	 * Get strings from function call's first argument
+	 * Get strings from function call's arguments
 	 */
 	protected _getCallArgStrings(callNode: ts.CallExpression): string[] {
 		if (!callNode.arguments.length) {
 			return;
 		}
 
-		const firstArg = callNode.arguments[0];
-		switch (firstArg.kind) {
-			case ts.SyntaxKind.StringLiteral:
-			case ts.SyntaxKind.FirstTemplateToken:
-				return [(firstArg as ts.StringLiteral).text];
-			case ts.SyntaxKind.ArrayLiteralExpression:
-				return (firstArg as ts.ArrayLiteralExpression).elements
-					.map((element: ts.StringLiteral) => element.text);
-			case ts.SyntaxKind.Identifier:
-				console.log('WARNING: We cannot extract variable values passed to TranslateService (yet)');
-				break;
-			default:
-				console.log(`SKIP: Unknown argument type: '${this._syntaxKindToName(firstArg.kind)}'`, firstArg);
-		}
+		let args: string[] = [];
+		callNode.arguments.forEach(arg => {
+			switch (arg.kind) {
+				case ts.SyntaxKind.StringLiteral:
+				case ts.SyntaxKind.FirstTemplateToken:
+					args.push((arg as ts.StringLiteral).text);
+				case ts.SyntaxKind.ArrayLiteralExpression:
+					args = args.concat((arg as ts.ArrayLiteralExpression).elements
+						.map((element: ts.StringLiteral) => element.text));
+				case ts.SyntaxKind.Identifier:
+					console.log('WARNING: We cannot extract variable values passed to TranslateService (yet)');
+					break;
+				default:
+					console.log(`SKIP: Unknown argument type: '${this._syntaxKindToName(arg.kind)}'`, arg);
+			}
+		});
+
+		return args;
 	}
 
 	/**

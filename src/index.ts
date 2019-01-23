@@ -18,3 +18,5 @@ export * from './compilers/compiler.factory';
 export * from './compilers/json.compiler';
 export * from './compilers/namespaced-json.compiler';
 export * from './compilers/po.compiler';
+export * from './compilers/xliff.compiler';
+export * from './compilers/xliff2.compiler';
